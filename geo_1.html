@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            background: rgb(19, 162, 184);
+        }
+
+        input[type=text],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        input[type=time],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        label {
+            padding: 12px 12px 12px 0;
+            display: inline-block;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .container {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 20px;
+        }
+
+        #ContainerMap {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 3px;
+        }
+
+        /* Clear floats after the columns 
+.row:after {
+    content: "";
+    display: table;
+    clear: both; 
+}
+*/
+
+        #btn {
+            padding: 12px;
+            margin-right: 50px;
+        }
+
+
+        #btn:hover {
+            background-color: rgb(19, 162, 184);
+        }
+
+        #btn:focus,
+        #btn.active {
+            outline: none !important;
+        }
+
+
+        #map {
+            width: 100%;
+            height: 750px;
+            border-radius: 5px;
+        }
+
+        input:focus {
+            outline: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!--
+        input fields startPlace and destinationPlace
+     -->
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-2">
+                <label for="fname">Start</label>
+            </div>
+            <div class="col-sm-10">
+                <input type="text" id="startPlace" placeholder="Standort">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-2">
+                <label for="lname">Ziel</label>
+            </div>
+            <div class="col-sm-10">
+                <input type="text" id="destinationPlace">
+            </div>
+        </div>
+        <br>
+
+        <div class="row">
+            <div class="col">
+                <label> Startzeitpunkt</label>
+            </div>
+            <div class="col">
+                <input id="TimeInput" type="time">
+            </div>
+            <div class="col"></div>
+            <div class="col">
+            </div>
+            <br/>
+            <div class="col">
+                <button id="btn" type="button" class="btn btn-outline-info">Submit</button>
+            </div>
+        </div>
+    </div>
+    <br>
+
+    <div class="container">
+        <div id="output">
+            Geben Sie Start- und Zielort ein
+            <br/>
+        </div>
+    </div>
+    <br>
+
+    <div class="container" id="ContainerMap">
+        <div id="map"></div>
+    </div>
+
+    <br>
+
+    <script>
+
+        var startPlace;
+        var destinationPlace;
+        var start_lat;
+        var start_long;
+        var inOffice;
+        var office_lat = 48.7401542;
+        var office_long = 9.0938525;
+        var TimeInput;
+        var arrayResetCurrentMarker = [];
+        var output = document.getElementById('output');
+        //var geocoder;
+        var currentPos;
+        var map;
+        var service;
+        var directionsService;
+        var directionsDisplay;
+        var idCurrentMarker;
+        var CurrentTime;
+        var CoffeeStartedBool;
+        var RoombaStartedBool;
+        var RoombaDelayMins = 2;
+        var CoffeeLeadMins = 2;
+
+
+        navigator.geolocation.getCurrentPosition(
+
+            function (position) {
+
+                //write current TimeInput in "StartTime in HH:mm format"
+                CurrentTime = new Date().toLocaleTimeString().slice(0, 5);
+                document.getElementById("TimeInput").value = CurrentTime;
+
+                //gets current location
+                currentPos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+                //geocoding Service
+                var geocoder = new google.maps.Geocoder();
+
+                //distance service
+                service = new google.maps.DistanceMatrixService;
+
+                //navigation services
+                directionsService = new google.maps.DirectionsService;
+                directionsDisplay = new google.maps.DirectionsRenderer;
+
+                //sets map and current marker
+                var mapCanvas = document.getElementById("map");
+                var mapOptions = { center: currentPos, zoom: 15 };
+                map = new google.maps.Map(mapCanvas, mapOptions);
+
+                var myCity = new google.maps.Circle({
+                    center: currentPos,
+                    radius: 100,
+                    strokeColor: "#0000FF",
+                    strokeOpacity: 0.8,
+                    strokeWeight: 0.5,
+                    fillColor: "#0000FF",
+                    fillOpacity: 0.5
+                });
+                arrayResetCurrentMarker.push(myCity);
+                myCity.setMap(map);
+
+                directionsDisplay.setMap(map);
+
+
+                //on-click function for button
+                document.getElementById('btn').addEventListener('click', function () {
+                    CoffeeStartedBool = false;
+                    RoombaStartedBool = false;
+                    startNavigate(position, currentPos, geocoder);
+                });
+
+            }, function () {
+                alert('Position: Deine Position konnte nicht ermittelt werden');
+                //document.getElementById('output').innerHTML = 'Deine Position konnte leider nicht ermittelt werden';
+            }
+        );
+
+
+        function startNavigate(position, currentPos, geocoder) {
+            //sets startPlace and destinationPlace
+            startPlace = document.getElementById('startPlace').value;
+            destinationPlace = document.getElementById('destinationPlace').value;
+
+            if (startPlace == "") {
+                startPlace = currentPos;
+                start_lat = position.coords.latitude;
+                start_long = position.coords.longitude;
+
+                isStartPlaceOffice();
+
+                idCurrentMarker = navigator.geolocation.watchPosition(showCurrentPosition);
+            } else {
+                getGeoCoordinatesOfStartPlace(geocoder, isStartPlaceOffice);
+                navigator.geolocation.clearWatch(idCurrentMarker);
+            }
+
+            //calculates navigation route
+            calculateAndDisplayRoute(directionsService, directionsDisplay);
+
+            //calculates ETA
+            GetDistanceAndTravelTime(service, calculateTravelTime);
+        }
+
+
+        //distance matrix, gets distance and travel TimeInput
+        function GetDistanceAndTravelTime(service, calculateTravelTime) {
+            service.getDistanceMatrix({
+                origins: [startPlace],
+                destinations: [destinationPlace],
+                travelMode: 'DRIVING',
+                unitSystem: google.maps.UnitSystem.METRIC,
+                avoidHighways: false,
+                avoidTolls: false
+            }, function (response, status) {
+                if (status !== 'OK') {
+                    alert('GetDistanceAndTravelTime: Error was: ' + status);
+                } else {
+                    var results = response.rows[0].elements;
+                    var travelTime = results[0].duration.text;
+                    var travelTimeSec = results[0].duration.value;
+                    var distance = results[0].distance.text;
+
+                    startPlace = inOffice ? "Office" : document.getElementById('startPlace').value;
+
+                    document.getElementById('output').innerHTML = startPlace + '<strong> to </strong>' +
+                        destinationPlace + ': ' + distance + '<strong> in</strong> ' + travelTime;
+
+                    calculateTravelTime(travelTimeSec);
+                }
+            });
+        }
+
+
+        //calculates route between startPlace and destinationPlace or current location and destinationPlace
+        function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+            //output.innerHTML += "startPlace: " + startPlace;
+            directionsService.route({
+                origin: startPlace,
+                destination: destinationPlace,
+                travelMode: 'DRIVING'
+            }, function (response, status) {
+                if (startPlace != "") {
+                    if (status === 'OK') {
+                        directionsDisplay.setDirections(response);
+                    } else {
+                        window.alert('calculateAndDisplayRoute: Directions request failed due to ' + status);
+                    }
+                }
+            });
+        }
+
+
+        //geocodes startPlace address to lat long
+        function getGeoCoordinatesOfStartPlace(geocoder, callback) {
+            geocoder.geocode({ 'address': startPlace }, function (results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    start_lat = String(results[0].geometry.location).slice(1, 11);
+                    start_long = String(results[0].geometry.location).slice(12, String(results[0].geometry.location).length - 1);
+                    startPlace = String(results[0].geometry.location);
+                    callback();
+                } else {
+                    alert('getGeoCoordinatesOfStartPlace: Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        }
+
+
+        function isStartPlaceOffice() {
+            //determines if starting locations equals inOffice
+            var diff_lat = office_lat - start_lat < 0 ? (office_lat - start_lat) * -1 : office_lat - start_lat;
+            var diff_long = office_long - start_long < 0 ? (office_long - start_long) * -1 : office_long - start_long;
+            if (diff_lat <= 0.0082 && diff_long <= 0.0082)
+                inOffice = true;
+            else
+                inOffice = false;
+        }
+
+
+        //updates current positions marker and navigation route
+        function showCurrentPosition(position) {
+
+            var newPlace = new google.maps.Circle;
+            var newPos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+            newPlace = new google.maps.Circle({
+                center: newPos,
+                radius: 100,
+                strokeColor: "#0000FF",
+                strokeOpacity: 0.8,
+                strokeWeight: 0.5,
+                fillColor: "#0000FF",
+                fillOpacity: 0.5
+            });
+            arrayResetCurrentMarker[0].setMap(null);
+            newPlace.setMap(map);
+            arrayResetCurrentMarker.push(newPlace);
+            arrayResetCurrentMarker.shift();
+
+            startPlace = newPos;
+
+            directionsDisplay.setOptions({
+                preserveViewport: true
+            });
+
+            //calculates navigation route
+            calculateAndDisplayRoute(directionsService, directionsDisplay);
+
+            //calculates ETA
+            GetDistanceAndTravelTime(service, calculateTravelTime);
+
+            //calculates startPlace TimeInput for roomba and coffee
+            //calculateTravelTime();
+
+        }
+
+
+        //calculates starting TimeInput for roomba and coffee machine
+        function calculateTravelTime(travelTimeSec) {
+            /*
+                        if (document.getElementById("startPlace").value === "") {
+                            //calculate current time to adjust traveltime and eta
+                            TimeInput = new Date();
+            
+                            var TimeInputHours = parseInt(String(TimeInput).slice(16, 18));
+                            var TimeInputMinutes = parseInt(String(TimeInput).slice(19, 21));
+            
+                        } else {
+                            */
+            //calculate TimeInput to hours and minutes
+            var TimeInputHours = parseInt(document.getElementById("TimeInput").value.slice(0, 2));
+            var TimeInputMinutes = parseInt(document.getElementById("TimeInput").value.slice(3, 5));
+
+            console.log(document.getElementById("TimeInput").value);
+
+            TimeInput = new Date();
+            TimeInput.setMinutes(TimeInputMinutes);
+            TimeInput.setHours(TimeInputHours);
+            //          }
+
+            //calculate time of arriving from input TimeInput and travel duration travelTimeSec
+            var ArrivingTime = new Date();
+            ArrivingTime.setTime(TimeInput.getTime());
+            ArrivingTime.setMinutes(ArrivingTime.getMinutes() + travelTimeSec / 60);
+
+            console.log(CurrentTime + " - currenttime");
+            console.log(String(TimeInput).slice(16, 21) + " - TimeInput");
+            console.log(travelTimeSec / 60 + " - Reisedauer in Mins");
+            console.log(String(ArrivingTime).slice(16, 21) + " - ArrivingTime");
+            console.log("");
+
+            document.getElementById('output').innerHTML += "<br/><strong/>Ankunft</strong>: " + String(ArrivingTime).slice(16, 21) + " Uhr <br/>";
+
+            compareTimeToStartSmartHome(TimeInput, ArrivingTime);
+        }
+
+
+        function compareTimeToStartSmartHome(StartTime, ArrivingTime) {
+            var CurrentTime = new Date();
+
+            var StartRoombaTime = new Date();
+            StartRoombaTime.setTime(StartTime.getTime());
+            StartRoombaTime.setMinutes(StartRoombaTime.getMinutes() + RoombaDelayMins);
+
+            var StartCoffeeTime = new Date();
+            StartCoffeeTime.setTime(ArrivingTime.getTime());
+            StartCoffeeTime.setMinutes(StartCoffeeTime.getMinutes() - CoffeeLeadMins);
+
+            StartRoombaTime = String(StartRoombaTime).slice(16, 21);
+            CurrentTime = String(CurrentTime).slice(16, 21);
+            StartTime = String(StartTime).slice(16, 21);
+            ArrivingTime = String(ArrivingTime).slice(16, 21);
+            StartCoffeeTime = String(StartCoffeeTime).slice(16, 21);
+
+            console.log(StartRoombaTime + " - StartRoombaTime");
+            console.log(CurrentTime + " - CurrentTime");
+            console.log(StartTime + " - StartTime");
+            console.log(ArrivingTime + " - ArrivingTime");
+            console.log(StartCoffeeTime + " - StartCoffeeTime");
+            console.log("  ");
+
+            if (StartRoombaTime === CurrentTime && inOffice && !RoombaStartedBool) {
+                console.log("Starte Roomba");
+                RoombaStartedBool = true;
+                sendRequestForRoomba();
+            }
+
+            //document.getElementById("output").innerHTML += (destinationPlace === "Laustraße");
+            //&& destination is home ==> home now hardcoded to 'Laustraße'
+            if (StartCoffeeTime === CurrentTime && !CoffeeStartedBool && (destinationPlace === "Laustraße" || destinationPlace === "Laustraße ")) {
+                //document.getElementById("output").innerHTML += "starte Kaffeemaschine";
+                console.log("Starte Kaffee");
+                CoffeeStartedBool = true;
+                sendRequestForCoffee();
+            }
+        }
+
+        function sendRequestForRoomba() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "http://openport.io:40896/roomba", true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            //xhttp.send("cups=2&strength=3&grinder=1&minutes=15");
+            xhttp.send();
+        }
+
+        function sendRequestForCoffee() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", "http://openport.io:40896/post", true);
+            xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhttp.send("cups=2&strength=3&grinder=1&minutes=15");
+            //xhttp.send();
+        }
+
+
+        //Click function started with enter
+        var onEnter = document.getElementById('destinationPlace');
+        onEnter.addEventListener("keyup", function (event) {
+            //event.preventDefault();
+            if (event.keyCode === 13) {
+                document.getElementById("btn").click();
+            }
+        });
+
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=	AIzaSyA-7d_AZ_6uy_NFJ3zVy-gE0iKxs9thjkg"></script>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>

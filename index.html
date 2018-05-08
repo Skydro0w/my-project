@@ -190,6 +190,12 @@
 
                 //geocoding Service
                 var geocoder = new google.maps.Geocoder();
+                
+                Geocoder.configure(
+                :timeout => 15,
+                :api_key => "AIzaSyA-7d_AZ_6uy_NFJ3zVy-gE0iKxs9thjkg",
+                :use_https => true
+                )
 
                 //distance service
                 service = new google.maps.DistanceMatrixService;

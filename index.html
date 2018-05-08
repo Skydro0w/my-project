@@ -10,87 +10,6 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
         crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
-
-    <style>
-        body {
-            background: rgb(19, 162, 184);
-        }
-
-        input[type=text],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        input[type=time],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            resize: vertical;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        label {
-            padding: 12px 12px 12px 0;
-            display: inline-block;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .container {
-            border-radius: 5px;
-            background-color: #f2f2f2;
-            padding: 20px;
-        }
-
-        #ContainerMap {
-            border-radius: 5px;
-            background-color: #f2f2f2;
-            padding: 3px;
-        }
-
-        /* Clear floats after the columns 
-.row:after {
-    content: "";
-    display: table;
-    clear: both; 
-}
-*/
-
-        #btn {
-            padding: 12px;
-            margin-right: 50px;
-        }
-
-
-        #btn:hover {
-            background-color: rgb(19, 162, 184);
-        }
-
-        #btn:focus,
-        #btn.active {
-            outline: none !important;
-        }
-
-
-        #map {
-            width: 100%;
-            height: 750px;
-            border-radius: 5px;
-        }
-
-        input:focus {
-            outline: 0;
-        }
-    </style>
-
 </head>
 
 <body>
@@ -190,7 +109,6 @@
 
                 //geocoding Service
                 var geocoder = new google.maps.Geocoder();
-               
 
                 //distance service
                 service = new google.maps.DistanceMatrixService;
@@ -443,7 +361,7 @@
 
             //document.getElementById("output").innerHTML += (destinationPlace === "Laustraße");
             //&& destination is home ==> home now hardcoded to 'Laustraße'
-            if (StartCoffeeTime === CurrentTime && !CoffeeStartedBool && (destinationPlace === "Laustraße" || destinationPlace === "Laustraße ")) {
+            if (StartCoffeeTime === CurrentTime && !CoffeeStartedBool && (destinationPlace === "Laustraße" || destinationPlace === "Laustraße " )) {
                 //document.getElementById("output").innerHTML += "starte Kaffeemaschine";
                 console.log("Starte Kaffee");
                 CoffeeStartedBool = true;
@@ -479,7 +397,7 @@
 
     </script>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=	AIzaSyA-7d_AZ_6uy_NFJ3zVy-gE0iKxs9thjkg&sensor=true"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=	AIzaSyA-7d_AZ_6uy_NFJ3zVy-gE0iKxs9thjkg"></script>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
